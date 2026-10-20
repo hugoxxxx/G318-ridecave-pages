@@ -1,0 +1,9 @@
+node_modules/
+dist/
+work/
+.superpowers/
+*.fit
+*.log
+.env*
+
+!.env.example

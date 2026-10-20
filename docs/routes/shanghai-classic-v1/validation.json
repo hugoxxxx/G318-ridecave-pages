@@ -1,0 +1,19 @@
+{
+  "prefix_m": 537062.7593150784,
+  "full_m": 5230396.550039586,
+  "prefix_points": 20316,
+  "original_points_preserved": 103565,
+  "full_points": 123880,
+  "prefix_max_gap_m": 29.998768833608512,
+  "seam": {
+    "lon": 116.90983,
+    "lat": 30.61781,
+    "original_ele": "36"
+  },
+  "dem_missing": 0,
+  "original_sha256": "6082876141d9b52740ab6ee5dfe4c8736c7f82b00fa53fb4f35c4de15bfa475c",
+  "files": {
+    "G318-Shanghai-to-Yueshan-classic-reconstructed.gpx": "f315811a43544fabdef476640764b49a48b81695a09837fe6f0c3f234223dc8b",
+    "G318-full-from-Shanghai-classic-reconstructed.gpx": "439760f0240f7ae9edb2c85c89b4bc25fd632cfe9437e3620e2971d38ae0785b"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "source": "https://download.geofabrik.de/asia/china.html",
+  "results": [
+    {
+      "name": "shanghai",
+      "bytes": 26008033,
+      "seconds": 10,
+      "sha256": "1a7f76b730de4bb5196be573a60712818ae9b57c26ff0d01ad02e3e14588ba3e"
+    },
+    {
+      "name": "jiangsu",
+      "bytes": 79949851,
+      "seconds": 17,
+      "sha256": "b2b61746d20ca0f8e993387af240500084d8ac6d5e99f47322432d04ad616581"
+    },
+    {
+      "name": "zhejiang",
+      "bytes": 90814973,
+      "seconds": 21,
+      "sha256": "883f3f192adda7ec02cce22557cacff70cfcc4e4632d5b3fd68c422cfa22fb94"
+    },
+    {
+      "name": "anhui",
+      "bytes": 43747923,
+      "seconds": 16,
+      "sha256": "dbf7b3ae707e29e656730a6bdcdfdba359d2dccea60a102d2be2a20afd2b03cf"
+    }
+  ]
+}
