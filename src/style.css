@@ -443,8 +443,11 @@ details label {
   color: #5b6954;
   box-shadow: 0 2px 5px #26382409;
 }
-.map-heading button {
+.map-heading button,
+.map-heading select {
   pointer-events: auto;
+  max-width: 130px;
+  font-family: inherit;
   border: 1px solid #d6dccb;
   background: #fffef5ed;
   border-radius: 6px;

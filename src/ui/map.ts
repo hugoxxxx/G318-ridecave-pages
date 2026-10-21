@@ -1,61 +1,134 @@
 import L from "leaflet";
 import type { Track, Candidate } from "../core/types";
+import {
+  BasemapState,
+  readBasemapPreference,
+  writeBasemapPreference,
+  type BasemapId,
+} from "./basemap";
 export class RouteMap {
   private map: L.Map;
   private full = L.featureGroup();
   private next = L.featureGroup();
   private pin = L.featureGroup();
-  constructor(element: HTMLElement, onTilesError: (failed: boolean) => void) {
+  private layers: L.TileLayer[] = [];
+  private timer?: ReturnType<typeof setTimeout>;
+  private storage?: Storage;
+  private basemap: BasemapState;
+  private key = import.meta.env.VITE_TIANDITU_KEY?.trim();
+  constructor(
+    element: HTMLElement,
+    private onBasemap: (provider: BasemapId, message: string) => void,
+  ) {
     this.map = L.map(element, {
       zoomControl: false,
       preferCanvas: true,
       attributionControl: true,
     }).setView([30.6, 116.7], 9);
     L.control.zoom({ position: "bottomright" }).addTo(this.map);
-    const key = import.meta.env.VITE_TIANDITU_KEY?.trim();
-    const options = key
-      ? [
-          {
-            url: `https://t{s}.tianditu.gov.cn/vec_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=${encodeURIComponent(key)}`,
-            attribution:
-              '&copy; <a href="https://www.tianditu.gov.cn/" target="_blank" rel="noopener">天地图</a> · 国家地理信息公共服务平台',
-          },
-          {
-            url: `https://t{s}.tianditu.gov.cn/cva_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=cva&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=${encodeURIComponent(key)}`,
-            attribution: "",
-          },
-        ]
-      : [
-          {
-            url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-            attribution:
-              '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
-          },
-        ];
-    const failures = new Map<L.TileLayer, boolean>();
-    for (const source of options) {
-      const tiles = L.tileLayer(source.url, {
-        maxZoom: 18,
-        minZoom: key ? 1 : 0,
-        subdomains: key ? "01234567" : "abc",
-        attribution: source.attribution,
-      });
-      const report = (failed: boolean) => {
-        failures.set(tiles, failed);
-        onTilesError([...failures.values()].some(Boolean));
-      };
-      tiles.on("tileerror", () => report(true));
-      // Re-evaluate the current batch so a recovered request or a new viewport
-      // does not leave a permanent warning after a single transient tile error.
-      tiles.on("load", () => {
-        const images = tiles.getContainer()?.querySelectorAll("img");
-        report(!!images && [...images].some((img) => img.naturalWidth === 0));
-      });
-      tiles.addTo(this.map);
+    try {
+      this.storage = localStorage;
+    } catch {
+      /* Storage is optional. */
     }
+    this.basemap = new BasemapState(
+      readBasemapPreference(this.storage, !!this.key),
+    );
     this.full.addTo(this.map);
     this.next.addTo(this.map);
     this.pin.addTo(this.map);
+    this.mountBasemap();
+  }
+  setBasemap(provider: BasemapId) {
+    if (provider === "tianditu" && !this.key) provider = "osm";
+    this.basemap.select(provider);
+    writeBasemapPreference(this.storage, provider);
+    this.mountBasemap();
+  }
+  private mountBasemap(fallbackNotice = "") {
+    clearTimeout(this.timer);
+    for (const layer of this.layers) {
+      this.map.removeLayer(layer);
+      layer.off();
+    }
+    this.layers = [];
+    const provider = this.basemap.provider,
+      version = this.basemap.version;
+    this.onBasemap(
+      provider,
+      provider === "none"
+        ? "仅显示路线；路线计算和 GPX 下载可正常使用。"
+        : fallbackNotice,
+    );
+    if (provider === "none") return;
+    const sources =
+      provider === "tianditu"
+        ? ["vec", "cva"].map((layer) => ({
+            url: `https://t{s}.tianditu.gov.cn/${layer}_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${layer}&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=${encodeURIComponent(this.key!)}`,
+            attribution:
+              layer === "vec"
+                ? '&copy; <a href="https://www.tianditu.gov.cn/" target="_blank" rel="noopener">天地图</a> · 国家地理信息公共服务平台'
+                : "",
+          }))
+        : [
+            {
+              url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+              attribution:
+                '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
+            },
+          ];
+    const check = (deadline = false) => {
+      if (version !== this.basemap.version) return;
+      const batches = this.layers.map((layer) => [
+        ...(layer.getContainer()?.querySelectorAll("img") ?? []),
+      ]);
+      const images = batches.flat();
+      if (!images.length) return;
+      const healthy = images.some(
+        (img) => img.complete && img.naturalWidth > 0,
+      );
+      const settled =
+        batches.length === sources.length &&
+        batches.every(
+          (batch) => batch.length > 0 && batch.every((img) => img.complete),
+        );
+      if (!healthy && (settled || deadline)) {
+        if (this.basemap.fallback(version)) {
+          writeBasemapPreference(this.storage, "osm");
+          this.mountBasemap(
+            "天地图暂不可用，已切换为 OpenStreetMap 备用底图。",
+          );
+        } else
+          this.onBasemap(
+            provider,
+            "底图暂不可用，可切换图源或选择仅路线。GPX 下载不受影响。",
+          );
+      } else if (settled) {
+        const partial = images.some((img) => img.naturalWidth === 0);
+        this.onBasemap(
+          provider,
+          partial
+            ? "部分底图未加载，可切换图源；GPX 下载不受影响。"
+            : fallbackNotice,
+        );
+      }
+    };
+    for (const source of sources) {
+      const layer = L.tileLayer(source.url, {
+        maxZoom: 18,
+        minZoom: provider === "tianditu" ? 1 : 0,
+        subdomains: "01234567",
+        attribution: source.attribution,
+      });
+      this.layers.push(layer);
+      layer.on("load", () => check());
+      layer.on("loading", () => {
+        clearTimeout(this.timer);
+        this.timer = setTimeout(() => check(true), 8000);
+      });
+      layer.addTo(this.map);
+    }
+    this.timer = setTimeout(() => check(true), 8000);
   }
   showFull(track: Track) {
     this.full.clearLayers();

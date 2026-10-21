@@ -2,6 +2,7 @@ import "./style.css";
 import "leaflet/dist/leaflet.css";
 import { RouteWorker } from "./worker/client";
 import { RouteMap } from "./ui/map";
+import type { BasemapId } from "./ui/basemap";
 import { FlowState, readHint, PROGRESS_KEY } from "./ui/state";
 import type { Track, MatchResult, Section } from "./core/types";
 
@@ -24,7 +25,7 @@ document.querySelector("#app")!.innerHTML = `
  <div class="divider"></div><div class="field-head"><label for="length">下一段距离</label><span>保留 1 km 上传余量</span></div><div class="distance-input"><input id="length" type="number" min="0.1" max="79" step="0.1" value="79" disabled><span>km</span></div>
  <details id="manual"><summary>手动调整起点 <span>＋</span></summary><p>匹配有歧义，或想从其他位置出发时，填写主路书上的累计里程。</p><label for="start">主路线起点里程（km）</label><div class="manual-row"><input id="start" type="number" min="0" step="0.001" value="0" disabled><button id="confirm" class="button small" disabled>确认起点</button></div><div id="candidates"></div></details>
  <div id="status" class="status" role="status" aria-live="polite">正在加载完整 G318 路线…</div><button id="download" class="button primary" disabled>${svg("download")} 下载下一段 GPX</button><p class="download-note">导入 RideCave，继续下一段旅程</p>
- </aside><section class="route-view"><div class="map-shell"><div id="map" aria-label="G318 路线地图"></div><div class="map-heading"><span class="map-tag">G318 · 路线预览</span><button id="full" aria-label="查看全程">查看全程 ↗</button></div><div class="map-legend"><span><i class="legend-full"></i>完整路书</span><span><i class="legend-next"></i>下一段</span><span><i class="legend-start"></i>续骑起点</span></div><div id="tile-warning" hidden>底图暂不可用，路线计算和下载仍可正常使用。</div></div>
+ </aside><section class="route-view"><div class="map-shell"><div id="map" aria-label="G318 路线地图"></div><div class="map-heading"><span class="map-tag">G318 · 路线预览</span><select id="basemap" aria-label="选择底图"><option value="tianditu">天地图</option><option value="osm">OSM 备用底图</option><option value="none">仅路线</option></select><button id="full" aria-label="查看全程">查看全程 ↗</button></div><div class="map-legend"><span><i class="legend-full"></i>完整路书</span><span><i class="legend-next"></i>下一段</span><span><i class="legend-start"></i>续骑起点</span></div><div id="tile-warning" hidden>底图暂不可用，路线计算和下载仍可正常使用。</div></div>
  <div class="stats"><div><span>下一段距离</span><strong id="stat-distance">—<small> km</small></strong></div><div><span>预计爬升</span><strong id="stat-ascent">—<small> m</small></strong></div><div><span>路线已完成</span><strong id="stat-progress">—<small> %</small></strong></div></div>
  <div class="elevation"><div class="elevation-title"><h3>下一段海拔</h3><span id="section-range">选择骑行记录，查看接续路段</span></div><div id="profile" class="profile"><span class="profile-empty">每一次出发，都从这里接续。</span></div><div class="elevation-axis"><span id="elevation-start">起点</span><span id="elevation-end">终点</span></div></div></section></section>
  <footer><div>${svg("pin")}<span>内置 G318 路书 <b id="total-distance">加载中</b> · 保留坐标与海拔</span></div><div><span>无需登录 · 骑行文件不上传</span><button id="clear">清除本地进度</button></div></footer><p class="compatibility">上海至月山约 537 km 为经典老线重建，含安庆汽渡；新增段海拔来自公开地形数据。路线位置与累计已骑距离不同。<a href="./routes/PROVENANCE.md" target="_blank" rel="noopener">数据来源</a> · GPX 按路线坐标计算距离；RideCave 的距离算法可能略有差异。首次使用请核对导入结果。</p>
@@ -41,9 +42,17 @@ const file = el<HTMLInputElement>("ride-file"),
   start = el<HTMLInputElement>("start"),
   length = el<HTMLInputElement>("length");
 const download = el<HTMLButtonElement>("download");
-const routeMap = new RouteMap(el("map"), (failed) => {
-  el("tile-warning").hidden = !failed;
+const basemapSelect = el<HTMLSelectElement>("basemap");
+if (!import.meta.env.VITE_TIANDITU_KEY?.trim())
+  basemapSelect.options[0].disabled = true;
+const routeMap = new RouteMap(el("map"), (provider, message) => {
+  basemapSelect.value = provider;
+  el("tile-warning").textContent = message;
+  el("tile-warning").hidden = !message;
 });
+basemapSelect.addEventListener("change", () =>
+  routeMap.setBasemap(basemapSelect.value as BasemapId),
+);
 function status(message: string, error = false) {
   el("status").textContent = message;
   el("status").classList.toggle("error", error);
