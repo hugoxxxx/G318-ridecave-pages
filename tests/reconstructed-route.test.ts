@@ -24,7 +24,7 @@ describe("reconstructed Shanghai route", () => {
     ).toEqual(
       original.segments[0].map(({ lon, lat, ele }) => ({ lon, lat, ele })),
     );
-    expect(index.totalM).toBeCloseTo(5230396.55, 0);
+    expect(index.totalM).toBeCloseTo(5231612.96, 0);
   });
   for (const startM of [0, prefixM - 39000, prefixM + 20000])
     it(`exports a continuous sub-80km section at ${startM}`, () => {

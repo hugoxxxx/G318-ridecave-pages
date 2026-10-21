@@ -8,6 +8,7 @@ export class RouteMap {
   constructor(element: HTMLElement, onTilesError: (failed: boolean) => void) {
     this.map = L.map(element, {
       zoomControl: false,
+      preferCanvas: true,
       attributionControl: true,
     }).setView([30.6, 116.7], 9);
     L.control.zoom({ position: "bottomright" }).addTo(this.map);
@@ -61,7 +62,7 @@ export class RouteMap {
     for (const pts of track.segments)
       L.polyline(
         pts.map((p) => [p.lat, p.lon] as L.LatLngTuple),
-        { color: "#497b62", weight: 3, opacity: 0.9 },
+        { color: "#497b62", weight: 3, opacity: 0.9, smoothFactor: 0.5 },
       ).addTo(this.full);
     this.fitFull();
   }
@@ -75,7 +76,7 @@ export class RouteMap {
     for (const pts of track.segments)
       L.polyline(
         pts.map((p) => [p.lat, p.lon] as L.LatLngTuple),
-        { color: "#db562e", weight: 5, opacity: 1 },
+        { color: "#db562e", weight: 5, opacity: 1, smoothFactor: 0.5 },
       ).addTo(this.next);
     this.map.fitBounds(this.next.getBounds(), {
       padding: [50, 50],

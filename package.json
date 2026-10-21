@@ -17,7 +17,6 @@
     "@turf/along": "7.4.0",
     "@turf/distance": "7.4.0",
     "@turf/nearest-point-on-line": "7.4.0",
-    "@turf/simplify": "7.4.0",
     "@xmldom/xmldom": "0.9.12",
     "fit-file-parser": "6.2.3",
     "flatbush": "4.6.2",

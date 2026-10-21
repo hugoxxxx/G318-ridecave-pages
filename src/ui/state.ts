@@ -1,4 +1,4 @@
-export const PROGRESS_KEY = "g318-progress:shanghai-classic-v1";
+export const PROGRESS_KEY = "g318-progress:shanghai-classic-west-v2";
 import type { MatchResult } from "../core/types";
 export class FlowState {
   version = 0;

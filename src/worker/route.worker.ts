@@ -1,5 +1,5 @@
 /// <reference lib="webworker" />
-import simplify from "@turf/simplify";
+import { previewTrack } from "../ui/preview";
 import { parseGpx, parseFit } from "../io/parse";
 import { buildRouteIndex, type RouteIndex } from "../core/route-index";
 import { matchRide } from "../core/match";
@@ -7,24 +7,6 @@ import { sliceNext } from "../core/slice";
 import { exportGpx } from "../io/export";
 import type { Track } from "../core/types";
 let index: RouteIndex | undefined;
-function preview(track: Track): Track {
-  return {
-    segments: track.segments.map((points) => {
-      const line = simplify(
-        {
-          type: "Feature",
-          properties: {},
-          geometry: {
-            type: "LineString",
-            coordinates: points.map((p) => [p.lon, p.lat]),
-          },
-        },
-        { tolerance: 0.002, highQuality: true },
-      );
-      return line.geometry.coordinates.map((c) => ({ lon: c[0], lat: c[1] }));
-    }),
-  };
-}
 self.onmessage = async ({ data: { id, action, payload } }) => {
   try {
     let result: unknown;
@@ -32,7 +14,7 @@ self.onmessage = async ({ data: { id, action, payload } }) => {
       const response = await fetch(payload.url);
       if (!response.ok) throw new Error("主路线加载失败，请刷新重试。");
       index = buildRouteIndex(parseGpx(await response.text()));
-      result = { totalM: index.totalM, track: preview(index.track) };
+      result = { totalM: index.totalM, track: previewTrack(index.track) };
     } else {
       if (!index) throw new Error("请等待主路线加载完成。");
       if (action === "match") {

@@ -64,7 +64,7 @@ describe("file parsing", () => {
   it("reads the full built-in route without losing elevation", () => {
     const t = parseGpx(readFileSync("public/routes/g318.gpx", "utf8"));
     expect(t.segments).toHaveLength(1);
-    expect(t.segments[0]).toHaveLength(123880);
+    expect(t.segments[0]).toHaveLength(124951);
     expect(t.segments[0].every((p) => Number.isFinite(p.ele))).toBe(true);
   });
 });

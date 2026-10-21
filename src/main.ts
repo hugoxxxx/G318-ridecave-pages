@@ -255,7 +255,7 @@ void (async () => {
       "load",
       {
         url: new URL(
-          `${import.meta.env.BASE_URL}routes/g318.gpx?v=shanghai-classic-v1`,
+          `${import.meta.env.BASE_URL}routes/g318.gpx?v=shanghai-classic-west-v2`,
           location.href,
         ).href,
       },

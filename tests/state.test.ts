@@ -15,7 +15,7 @@ describe("safe UI progression", () => {
         },
       }),
     ).toBeUndefined();
-    expect(keys).toEqual(["g318-progress:shanghai-classic-v1"]);
+    expect(keys).toEqual(["g318-progress:shanghai-classic-west-v2"]);
   });
   it("ignores old results after a new user action", () => {
     const s = new FlowState();

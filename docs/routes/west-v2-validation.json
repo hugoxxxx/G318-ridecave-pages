@@ -1,0 +1,19 @@
+{
+  "version": "shanghai-classic-west-v2",
+  "source_sha256": "6586747e20b51d01eae1111654dbb0464156d1fd364d83766a41e68099a0afb1",
+  "merged_sha256": "0adfa7c7f241427df027dc107d83fe85587827be6ac7c33223d4bdb605c40256",
+  "west_points": 104636,
+  "full_points": 124951,
+  "prefix_points_unchanged": 20315,
+  "full_m": 5231612.963729925,
+  "west_m": 4694550.204414847,
+  "updated_section_bounds": [
+    116.22291,
+    30.74667,
+    116.36758,
+    30.93081
+  ],
+  "updated_section_points": 1417,
+  "updated_section_max_gap_m": 267.26924983961396,
+  "original_coordinates_and_elevations_preserved": true
+}

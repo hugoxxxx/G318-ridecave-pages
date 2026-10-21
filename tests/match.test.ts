@@ -168,7 +168,7 @@ describe("route matching", () => {
       const index = buildRouteIndex(
         parseGpx(readFileSync("public/routes/g318-original.gpx", "utf8")),
       );
-      expect(index.totalM).toBeCloseTo(4693334, -1);
+      expect(index.totalM).toBeCloseTo(4694550, -1);
       const b = readFileSync(process.env.RIDE_FIXTURE_PATH!);
       const result = matchRide(
         index,
